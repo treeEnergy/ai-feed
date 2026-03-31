@@ -100,12 +100,26 @@ export function FeedCard({ item, person }: FeedCardProps) {
         )}
       </div>
 
+      {/* Paper title for arXiv */}
+      {item.platform === 'arxiv' && item.metadata?.title && (
+        <h3
+          className="font-serif text-base font-bold mb-2"
+          style={{ color: '#141413', letterSpacing: '-0.2px' }}
+        >
+          {item.metadata.title}
+        </h3>
+      )}
+
       {/* Body */}
       <div
-        className="font-serif text-[15px] leading-relaxed mb-3"
+        className="font-serif text-[15px] leading-relaxed mb-3 whitespace-pre-line"
         style={{ color: '#141413' }}
       >
-        {displayText}
+        {item.platform === 'arxiv' && item.metadata?.title
+          ? (displayText.startsWith(item.metadata.title)
+              ? displayText.slice(item.metadata.title.length).replace(/^\n+/, '')
+              : displayText)
+          : displayText}
       </div>
 
       {/* Collapsible original */}

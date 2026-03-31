@@ -24,24 +24,30 @@ export class ScraperEngine {
   async scrapeAll(persons: Person[]): Promise<ScrapedItem[]> {
     const allItems: ScrapedItem[] = [];
 
-    for (const person of persons) {
-      const platforms = Object.keys(person.platforms) as Platform[];
+    // Scrape HTTP-based platforms first (fast), then Puppeteer-based (slow)
+    const httpPlatforms: Platform[] = ['arxiv', 'github'];
+    const browserPlatforms: Platform[] = ['x', 'facebook'];
 
-      for (const platform of platforms) {
-        const handle = person.platforms[platform];
-        if (!handle) continue;
+    for (const platformGroup of [httpPlatforms, browserPlatforms]) {
+      for (const person of persons) {
+        for (const platform of platformGroup) {
+          const handle = person.platforms[platform];
+          if (!handle) continue;
 
-        const scraper = this.scrapers.get(platform);
-        if (!scraper) continue;
+          const scraper = this.scrapers.get(platform);
+          if (!scraper) continue;
 
-        try {
-          const items = await scraper.scrape(person);
-          allItems.push(...items);
-        } catch (err) {
-          console.error(
-            `Scraper error for ${person.name} on ${platform}:`,
-            err instanceof Error ? err.message : err
-          );
+          try {
+            console.log(`[Scraper] Scraping ${platform} for ${person.name}...`);
+            const items = await scraper.scrape(person);
+            console.log(`[Scraper]   Got ${items.length} items`);
+            allItems.push(...items);
+          } catch (err) {
+            console.error(
+              `[Scraper] Error for ${person.name} on ${platform}:`,
+              err instanceof Error ? err.message : err
+            );
+          }
         }
       }
     }

@@ -18,8 +18,51 @@ export class GitHubScraper extends BaseScraper {
         headers: { 'User-Agent': randomUA() },
         timeout: 15000,
       });
-      return parseRepos(html, person.id);
+      const repos = parseRepos(html, person.id);
+
+      // Fetch README for top 5 repos to get richer content
+      const enriched: ScrapedItem[] = [];
+      for (const repo of repos.slice(0, 5)) {
+        try {
+          const readmeText = await this.fetchReadme(username, repo.metadata.repoName);
+          if (readmeText) {
+            repo.originalText = readmeText;
+            repo.metadata.hasReadme = true;
+          }
+        } catch {
+          // Keep original description
+        }
+        enriched.push(repo);
+      }
+      // Add remaining repos without README fetch
+      enriched.push(...repos.slice(5));
+      return enriched;
     });
+  }
+
+  private async fetchReadme(username: string, repoName: string): Promise<string | null> {
+    try {
+      // Use GitHub raw API to get README content
+      const { data } = await axios.get(
+        `https://raw.githubusercontent.com/${username}/${repoName}/HEAD/README.md`,
+        { headers: { 'User-Agent': randomUA() }, timeout: 10000 }
+      );
+      if (typeof data === 'string' && data.length > 20) {
+        // Strip markdown formatting, keep first 1500 chars for translation
+        const cleaned = data
+          .replace(/<!--[\s\S]*?-->/g, '')      // HTML comments
+          .replace(/!\[.*?\]\(.*?\)/g, '')       // images
+          .replace(/\[([^\]]+)\]\(.*?\)/g, '$1') // links -> text
+          .replace(/#{1,6}\s/g, '')              // headings
+          .replace(/[`*_~]/g, '')                // formatting
+          .replace(/\n{3,}/g, '\n\n')            // multiple newlines
+          .trim();
+        return cleaned.substring(0, 1500);
+      }
+    } catch {
+      // README not found or fetch failed
+    }
+    return null;
   }
 }
 
@@ -35,7 +78,6 @@ export function parseRepos(html: string, personId: string): ScrapedItem[] {
     const description = $el.find('p[itemprop="description"]').text().trim();
     const language = $el.find('[itemprop="programmingLanguage"]').text().trim();
 
-    // Stars and forks from the link text
     const starsText = $el.find('a[href$="/stargazers"]').text().trim();
     const forksText = $el.find('a[href$="/forks"]').text().trim();
     const stars = parseInt(starsText.replace(/,/g, ''), 10) || 0;
@@ -56,7 +98,7 @@ export function parseRepos(html: string, personId: string): ScrapedItem[] {
       url: repoHref.startsWith('http') ? repoHref : `https://github.com${repoHref}`,
       publishedAt: datetime,
       scrapedAt: new Date().toISOString(),
-      metadata: { repoName, language, stars, forks },
+      metadata: { repoName, language, stars, forks, description },
       isRead: false,
       isStarred: false,
       translationStatus: 'pending',

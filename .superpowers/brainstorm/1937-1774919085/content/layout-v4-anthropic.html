@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Feed - Anthropic Style</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #faf9f5;
+    color: #141413;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ========= 左侧边栏 ========= */
+  .sidebar {
+    width: 272px;
+    background: #faf9f5;
+    border-right: 1px solid rgba(20,20,19,0.08);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo-icon {
+    width: 30px;
+    height: 30px;
+    background: #141413;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #faf9f5;
+  }
+
+  .logo-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #141413;
+    letter-spacing: -0.5px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #f0eee6;
+    border: 1px solid rgba(20,20,19,0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .search-box:hover {
+    border-color: rgba(20,20,19,0.12);
+  }
+
+  .search-box .icon { font-size: 13px; color: #b0aea5; }
+
+  .search-box span {
+    font-size: 13px;
+    color: #b0aea5;
+  }
+
+  .search-box kbd {
+    margin-left: auto;
+    font-size: 10px;
+    color: #b0aea5;
+    background: rgba(20,20,19,0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+
+  /* 导航 */
+  .nav-section { padding: 12px 12px 0; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: rgba(20,20,19,0.03); }
+
+  .nav-item.active {
+    background: #141413;
+  }
+
+  .nav-item.active .nav-label { color: #faf9f5; }
+  .nav-item.active .nav-icon { color: #faf9f5; opacity: 0.7; }
+
+  .nav-icon {
+    font-size: 14px;
+    color: #878680;
+    width: 20px;
+    text-align: center;
+  }
+
+  .nav-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #141413;
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: #c6613f;
+    background: rgba(198,97,63,0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .nav-item.active .nav-badge {
+    color: #faf9f5;
+    background: rgba(250,249,245,0.15);
+  }
+
+  /* 人物列表 */
+  .section-title {
+    padding: 20px 20px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #b0aea5;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .people-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px;
+  }
+
+  .people-list::-webkit-scrollbar { width: 4px; }
+  .people-list::-webkit-scrollbar-track { background: transparent; }
+  .people-list::-webkit-scrollbar-thumb { background: rgba(20,20,19,0.08); border-radius: 2px; }
+
+  .person-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+  }
+
+  .person-item:hover { background: rgba(20,20,19,0.03); }
+  .person-item.selected { background: #f0eee6; }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #faf9f5;
+    flex-shrink: 0;
+  }
+
+  .avatar.yl { background: #141413; }
+  .avatar.ak { background: #c6613f; }
+  .avatar.jf { background: #5c7a6e; }
+  .avatar.is { background: #8b7355; }
+  .avatar.dh { background: #6b5b73; }
+
+  .person-info { min-width: 0; flex: 1; }
+
+  .person-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #141413;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .person-title {
+    font-size: 11px;
+    color: #b0aea5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+
+  .unread-dot {
+    width: 7px; height: 7px;
+    background: #c6613f;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .add-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    margin: 6px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px dashed rgba(20,20,19,0.12);
+    transition: all 0.15s;
+  }
+
+  .add-btn:hover {
+    border-color: rgba(20,20,19,0.2);
+    background: rgba(20,20,19,0.02);
+  }
+
+  .add-btn span { font-size: 13px; color: #878680; }
+
+  /* 底部 */
+  .sidebar-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(20,20,19,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sync-status {
+    font-size: 11px;
+    color: #b0aea5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sync-dot {
+    width: 6px; height: 6px;
+    background: #5c7a6e;
+    border-radius: 50%;
+  }
+
+  .settings-btn {
+    font-size: 15px;
+    color: #b0aea5;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+
+  .settings-btn:hover { color: #141413; }
+
+  /* ========= 主内容区 ========= */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f5f3ec;
+  }
+
+  /* 每周时间轴 */
+  .weekly-bar {
+    padding: 20px 32px;
+    background: #faf9f5;
+    border-bottom: 1px solid rgba(20,20,19,0.08);
+  }
+
+  .weekly-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .weekly-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #141413;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .weekly-nav {
+    display: flex;
+    gap: 4px;
+  }
+
+  .weekly-nav button {
+    background: transparent;
+    border: 1px solid rgba(20,20,19,0.12);
+    color: #878680;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+
+  .weekly-nav button:hover {
+    border-color: rgba(20,20,19,0.25);
+    color: #141413;
+  }
+
+  .timeline-track {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .timeline-track::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 24px;
+    right: 24px;
+    height: 2px;
+    background: rgba(20,20,19,0.08);
+  }
+
+  .week-node {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+    padding: 0 6px;
+  }
+
+  .week-dot {
+    width: 14px; height: 14px;
+    background: #f0eee6;
+    border: 2px solid rgba(20,20,19,0.15);
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    transition: all 0.2s;
+  }
+
+  .week-node:hover .week-dot {
+    border-color: #c6613f;
+  }
+
+  .week-node.active .week-dot {
+    background: #c6613f;
+    border-color: #c6613f;
+    box-shadow: 0 0 0 4px rgba(198,97,63,0.15);
+  }
+
+  .week-date {
+    font-size: 12px;
+    color: #b0aea5;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .week-node.active .week-date {
+    color: #141413;
+    font-weight: 600;
+  }
+
+  .week-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .week-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .tag-terra { background: rgba(198,97,63,0.1); color: #c6613f; }
+  .tag-sage { background: rgba(92,122,110,0.1); color: #5c7a6e; }
+  .tag-warm { background: rgba(139,115,85,0.1); color: #8b7355; }
+  .tag-plum { background: rgba(107,91,115,0.1); color: #6b5b73; }
+  .tag-dark { background: rgba(20,20,19,0.06); color: #141413; }
+
+  /* 内容头部 */
+  .content-header {
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f5f3ec;
+  }
+
+  .content-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #141413;
+    letter-spacing: -0.5px;
+  }
+
+  .content-subtitle {
+    font-size: 13px;
+    color: #b0aea5;
+    margin-top: 3px;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 2px;
+    background: rgba(20,20,19,0.04);
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  .filter-pill {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #878680;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .filter-pill:hover { color: #141413; }
+
+  .filter-pill.active {
+    color: #141413;
+    background: #faf9f5;
+    box-shadow: 0 1px 3px rgba(20,20,19,0.06);
+    font-weight: 600;
+  }
+
+  /* 动态流 */
+  .feed {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 32px 32px;
+  }
+
+  .feed::-webkit-scrollbar { width: 6px; }
+  .feed::-webkit-scrollbar-track { background: transparent; }
+  .feed::-webkit-scrollbar-thumb { background: rgba(20,20,19,0.08); border-radius: 3px; }
+  .feed::-webkit-scrollbar-thumb:hover { background: rgba(20,20,19,0.15); }
+
+  .date-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0 12px;
+  }
+
+  .date-divider span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #b0aea5;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .date-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(20,20,19,0.06);
+  }
+
+  /* 动态卡片 */
+  .feed-card {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 8px;
+    border-radius: 16px;
+    background: #faf9f5;
+    border: 1px solid rgba(20,20,19,0.06);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .feed-card:hover {
+    border-color: rgba(20,20,19,0.12);
+    box-shadow: 0 2px 12px rgba(20,20,19,0.04);
+  }
+
+  .card-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #faf9f5;
+    flex-shrink: 0;
+  }
+
+  .card-body { flex: 1; min-width: 0; }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .card-author {
+    font-size: 14px;
+    font-weight: 600;
+    color: #141413;
+  }
+
+  .card-source {
+    font-size: 12px;
+    color: #b0aea5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .source-dot {
+    width: 3px; height: 3px;
+    background: #d4d3cb;
+    border-radius: 50%;
+  }
+
+  .card-topic {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .card-text-zh {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #141413;
+    margin-bottom: 10px;
+  }
+
+  .card-text-en {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #b0aea5;
+    padding: 10px 14px;
+    background: #f0eee6;
+    border-radius: 10px;
+    border-left: 3px solid rgba(20,20,19,0.08);
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .card-action {
+    font-size: 12px;
+    color: #b0aea5;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+
+  .card-action:hover {
+    color: #c6613f;
+    background: rgba(198,97,63,0.06);
+  }
+
+  /* GitHub 卡片 */
+  .repo-card {
+    background: #f0eee6;
+    border: 1px solid rgba(20,20,19,0.06);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .repo-icon {
+    font-size: 18px;
+    color: #878680;
+  }
+
+  .repo-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #c6613f;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .repo-desc {
+    font-size: 12px;
+    color: #878680;
+    margin-top: 2px;
+  }
+
+  .repo-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #b0aea5;
+  }
+
+  /* 论文标题 */
+  .paper-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #141413;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== 左侧边栏 ===== -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">AI</div>
+        <span class="logo-text">AI Feed</span>
+      </div>
+      <div class="search-box">
+        <span class="icon">◎</span>
+        <span>搜索动态或人物...</span>
+        <kbd>⌘K</kbd>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-item active">
+        <span class="nav-icon">◉</span>
+        <span class="nav-label">全部动态</span>
+        <span class="nav-badge">12</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">☆</span>
+        <span class="nav-label">收藏</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◈</span>
+        <span class="nav-label">论文追踪</span>
+        <span class="nav-badge">3</span>
+      </div>
+    </div>
+
+    <div class="section-title">关注的人</div>
+    <div class="people-list">
+      <div class="person-item selected">
+        <div class="avatar yl">YL</div>
+        <div class="person-info">
+          <div class="person-name">Yann LeCun</div>
+          <div class="person-title">VP & Chief AI Scientist, Meta</div>
+        </div>
+        <div class="unread-dot"></div>
+      </div>
+      <div class="person-item">
+        <div class="avatar ak">AK</div>
+        <div class="person-info">
+          <div class="person-name">Andrej Karpathy</div>
+          <div class="person-title">Eureka Labs · 前 OpenAI</div>
+        </div>
+        <div class="unread-dot"></div>
+      </div>
+      <div class="person-item">
+        <div class="avatar jf">JF</div>
+        <div class="person-info">
+          <div class="person-name">Jim Fan</div>
+          <div class="person-title">Senior Research Manager, NVIDIA</div>
+        </div>
+      </div>
+      <div class="person-item">
+        <div class="avatar is">IS</div>
+        <div class="person-info">
+          <div class="person-name">Ilya Sutskever</div>
+          <div class="person-title">Co-founder, SSI</div>
+        </div>
+      </div>
+      <div class="person-item">
+        <div class="avatar dh">DH</div>
+        <div class="person-info">
+          <div class="person-name">Demis Hassabis</div>
+          <div class="person-title">CEO, Google DeepMind</div>
+        </div>
+      </div>
+      <div class="add-btn">
+        <span style="color:#c6613f;">+</span>
+        <span>添加关注对象</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <div class="sync-dot"></div>
+        上次同步 · 8 分钟前
+      </div>
+      <div class="settings-btn">⚙</div>
+    </div>
+  </div>
+
+  <!-- ===== 主内容区 ===== -->
+  <div class="main">
+    <!-- 每周关注时间轴 -->
+    <div class="weekly-bar">
+      <div class="weekly-header">
+        <div class="weekly-title">
+          <span style="color:#c6613f;">◆</span> 每周关注热点
+        </div>
+        <div class="weekly-nav">
+          <button>‹</button>
+          <button>›</button>
+        </div>
+      </div>
+      <div class="timeline-track">
+        <div class="week-node">
+          <div class="week-dot"></div>
+          <div class="week-date">3.3 – 3.9</div>
+          <div class="week-tags">
+            <span class="week-tag tag-sage">多模态</span>
+            <span class="week-tag tag-dark">MoE</span>
+          </div>
+        </div>
+        <div class="week-node">
+          <div class="week-dot"></div>
+          <div class="week-date">3.10 – 3.16</div>
+          <div class="week-tags">
+            <span class="week-tag tag-terra">RLHF</span>
+            <span class="week-tag tag-plum">视觉模型</span>
+          </div>
+        </div>
+        <div class="week-node">
+          <div class="week-dot"></div>
+          <div class="week-date">3.17 – 3.23</div>
+          <div class="week-tags">
+            <span class="week-tag tag-sage">Agent</span>
+            <span class="week-tag tag-warm">开源</span>
+          </div>
+        </div>
+        <div class="week-node active">
+          <div class="week-dot"></div>
+          <div class="week-date">3.24 – 3.31</div>
+          <div class="week-tags">
+            <span class="week-tag tag-terra">AGI</span>
+            <span class="week-tag tag-sage">具身智能</span>
+            <span class="week-tag tag-warm">Scaling</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容头部 -->
+    <div class="content-header">
+      <div>
+        <div class="content-title">全部动态</div>
+        <div class="content-subtitle">来自 5 位关注对象的最新内容</div>
+      </div>
+      <div class="filter-pills">
+        <button class="filter-pill active">全部</button>
+        <button class="filter-pill">𝕏</button>
+        <button class="filter-pill">GitHub</button>
+        <button class="filter-pill">arXiv</button>
+        <button class="filter-pill">Facebook</button>
+      </div>
+    </div>
+
+    <!-- 动态流 -->
+    <div class="feed">
+      <div class="date-divider"><span>今天</span></div>
+
+      <!-- 卡片 1: Yann LeCun - X -->
+      <div class="feed-card">
+        <div class="card-avatar" style="background:#141413;">YL</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-author">Yann LeCun</span>
+            <span class="card-source"><span class="source-dot"></span>𝕏 · 2 小时前</span>
+            <span class="card-topic tag-terra">AGI</span>
+          </div>
+          <div class="card-text-zh">
+            我认为当前的 LLM 方法不可能实现真正的 AGI。我们需要世界模型（World Models），需要让机器像婴儿一样通过观察和互动来理解物理世界的运作方式。纯文本训练永远无法达到人类级别的理解能力。
+          </div>
+          <div class="card-text-en">
+            "I believe current LLM approaches cannot lead to true AGI. We need World Models — machines that learn by observing and interacting with the physical world, much like infants do."
+          </div>
+          <div class="card-actions">
+            <span class="card-action">↗ 原文</span>
+            <span class="card-action">⊡ 复制</span>
+            <span class="card-action">☆ 收藏</span>
+            <span class="card-action">◇ 相关讨论</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡片 2: Jim Fan - X -->
+      <div class="feed-card">
+        <div class="card-avatar" style="background:#5c7a6e;">JF</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-author">Jim Fan</span>
+            <span class="card-source"><span class="source-dot"></span>𝕏 · 5 小时前</span>
+            <span class="card-topic tag-sage">具身智能</span>
+          </div>
+          <div class="card-text-zh">
+            具身智能是通往 AGI 的必经之路。我们在 NVIDIA 的最新研究表明，将大语言模型与机器人控制相结合，可以实现前所未有的泛化能力。Foundation Agent 不需要为每个任务单独训练——一个模型就能操控不同形态的机器人。
+          </div>
+          <div class="card-text-en">
+            "Embodied AI is a necessary path to AGI. Our latest work at NVIDIA shows that combining LLMs with robotic control achieves unprecedented generalization."
+          </div>
+          <div class="card-actions">
+            <span class="card-action">↗ 原文</span>
+            <span class="card-action">⊡ 复制</span>
+            <span class="card-action">☆ 收藏</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="date-divider"><span>昨天</span></div>
+
+      <!-- 卡片 3: Karpathy - GitHub -->
+      <div class="feed-card">
+        <div class="card-avatar" style="background:#c6613f;">AK</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-author">Andrej Karpathy</span>
+            <span class="card-source"><span class="source-dot"></span>GitHub · 昨天</span>
+            <span class="card-topic tag-warm">开源</span>
+          </div>
+          <div class="card-text-zh">
+            发布了新项目——一个最小化的 BPE tokenizer 实现。用不到 300 行代码完整实现了 GPT-4 所使用的分词算法，非常适合教学和深入理解 LLM 的分词原理。
+          </div>
+          <div class="repo-card">
+            <span class="repo-icon">⬡</span>
+            <div>
+              <div class="repo-name">karpathy/minbpe</div>
+              <div class="repo-desc">Minimal, clean code for the BPE algorithm</div>
+            </div>
+            <div class="repo-stats">
+              <span>★ 8.2k</span>
+              <span>⑂ 1.1k</span>
+              <span style="color:#8b7355;">Python</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <span class="card-action">↗ 仓库</span>
+            <span class="card-action">⊡ 复制</span>
+            <span class="card-action">☆ 收藏</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡片 4: Yann LeCun - arXiv -->
+      <div class="feed-card">
+        <div class="card-avatar" style="background:#141413;">YL</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-author">Yann LeCun</span>
+            <span class="card-source"><span class="source-dot"></span>arXiv · 昨天</span>
+            <span class="card-topic tag-plum">论文</span>
+          </div>
+          <div class="paper-title">V-JEPA: Video Joint Embedding Predictive Architecture</div>
+          <div class="card-text-zh">
+            提出了一种新的视频理解预训练方法。与传统方法不同，V-JEPA 不需要像素级重建，而是在抽象特征空间中进行预测学习。在多个视频理解基准测试上达到了最先进水平，证明了 JEPA 架构在视频领域的有效性。
+          </div>
+          <div class="card-actions">
+            <span class="card-action">◈ 论文 PDF</span>
+            <span class="card-action">⊡ 复制摘要</span>
+            <span class="card-action">☆ 收藏</span>
+            <span class="card-action">⊕ 引用信息</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡片 5: Demis Hassabis -->
+      <div class="feed-card">
+        <div class="card-avatar" style="background:#6b5b73;">DH</div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-author">Demis Hassabis</span>
+            <span class="card-source"><span class="source-dot"></span>𝕏 · 昨天</span>
+            <span class="card-topic tag-terra">科学发现</span>
+          </div>
+          <div class="card-text-zh">
+            AlphaFold 3 能够预测所有生命分子的结构和相互作用。这不仅是蛋白质折叠——它预测 DNA、RNA、配体和修饰残基的结合方式。AI 正在加速科学发现的每一个环节。
+          </div>
+          <div class="card-text-en">
+            "AlphaFold 3 can predict the structure and interactions of all of life's molecules. AI is accelerating every aspect of scientific discovery."
+          </div>
+          <div class="card-actions">
+            <span class="card-action">↗ 原文</span>
+            <span class="card-action">⊡ 复制</span>
+            <span class="card-action">☆ 收藏</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

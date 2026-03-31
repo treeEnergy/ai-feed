@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ScrapedItem, Person } from '../types';
 import { useFeedStore } from '../stores/feedStore';
 
@@ -19,12 +20,15 @@ function timeAgo(date: string) {
 
 export function RepoCard({ item, person }: RepoCardProps) {
   const toggleItemStar = useFeedStore((s) => s.toggleItemStar);
+  const [showReadme, setShowReadme] = useState(false);
   const meta = item.metadata ?? {};
   const repoName = meta.repoName ?? meta.name ?? item.originalText;
-  const description = meta.description ?? item.translatedText ?? '';
+  const description = meta.description ?? '';
   const stars = meta.stars;
   const forks = meta.forks;
   const language = meta.language;
+  const readmeContent = item.translatedText || item.originalText;
+  const hasRichContent = readmeContent && readmeContent.length > 100;
 
   const handleOpenUrl = () => {
     window.electronAPI?.invoke('shell:openExternal', item.url).catch(() => {});
@@ -133,6 +137,35 @@ export function RepoCard({ item, person }: RepoCardProps) {
           </div>
         </div>
       </div>
+
+      {/* README content */}
+      {hasRichContent && (
+        <div className="mb-3">
+          <button
+            onClick={() => setShowReadme(!showReadme)}
+            className="text-xs font-medium mb-1.5 transition-colors"
+            style={{ color: '#878680' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#c6613f')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#878680')}
+          >
+            {showReadme ? '收起详情 ▲' : '查看详情 ▼'}
+          </button>
+          {showReadme && (
+            <div
+              className="rounded-[10px] p-4 text-sm leading-relaxed font-serif whitespace-pre-line"
+              style={{
+                backgroundColor: '#f0eee6',
+                borderLeft: '3px solid rgba(20,20,19,0.08)',
+                color: '#141413',
+                maxHeight: 400,
+                overflowY: 'auto',
+              }}
+            >
+              {readmeContent}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Footer actions */}
       <div className="flex items-center gap-4 pt-1">

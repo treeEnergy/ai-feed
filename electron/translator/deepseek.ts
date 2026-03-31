@@ -38,7 +38,20 @@ export class DeepSeekTranslator {
         timeout: 30000,
       },
     );
-    return JSON.parse(response.data.choices[0].message.content);
+    const raw = response.data.choices[0].message.content;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      // If JSON parse fails, try to extract translation from raw text
+      const translationMatch = raw.match(/"translation"\s*:\s*"([\s\S]*?)(?:"\s*,\s*"topics|"\s*})/);
+      const topicsMatch = raw.match(/"topics"\s*:\s*\[([\s\S]*?)\]/);
+      return {
+        translation: translationMatch ? translationMatch[1].replace(/\\"/g, '"') : raw,
+        topics: topicsMatch
+          ? topicsMatch[1].split(',').map((t: string) => t.trim().replace(/"/g, '')).filter(Boolean)
+          : [],
+      };
+    }
   }
 
   async translateBatch(items: ScrapedItem[]): Promise<ScrapedItem[]> {

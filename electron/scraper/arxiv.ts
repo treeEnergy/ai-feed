@@ -46,7 +46,7 @@ export function parseResults(html: string, personId: string): ScrapedItem[] {
       id,
       platform: 'arxiv',
       personId,
-      originalText: abstract || title,
+      originalText: title && abstract ? `${title}\n\n${abstract}` : abstract || title,
       url: paperUrl.startsWith('http') ? paperUrl : `https://arxiv.org${paperUrl}`,
       publishedAt: parseArxivDate(dateText),
       scrapedAt: new Date().toISOString(),

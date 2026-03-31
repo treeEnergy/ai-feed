@@ -139,7 +139,6 @@ export function Sidebar({ onAddPerson, onOpenSettings }: SidebarProps) {
               key={person.id}
               onClick={() => {
                 selectPerson(person.id);
-                setViewFilter('all');
               }}
               className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors mb-0.5"
               style={

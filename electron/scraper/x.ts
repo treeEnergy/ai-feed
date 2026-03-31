@@ -33,11 +33,17 @@ export class XScraper extends BaseScraper {
 
       try {
         await page.goto(`https://x.com/${username}`, {
-          waitUntil: 'networkidle2',
-          timeout: 30000,
+          waitUntil: 'domcontentloaded',
+          timeout: 15000,
         });
 
-        await page.waitForSelector('[data-testid="tweet"]', { timeout: 15000 });
+        await page.waitForSelector('[data-testid="tweet"]', { timeout: 10000 });
+
+        // Scroll to load more tweets
+        await page.evaluate(() => window.scrollBy(0, 3000));
+        await new Promise(r => setTimeout(r, 2000));
+        await page.evaluate(() => window.scrollBy(0, 3000));
+        await new Promise(r => setTimeout(r, 1500));
 
         const rawTweets = await page.evaluate(() => {
           const tweets: Array<{

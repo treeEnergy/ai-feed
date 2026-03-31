@@ -24,12 +24,12 @@ export class FacebookScraper extends BaseScraper {
 
         try {
           await page.goto(`https://www.facebook.com/${username}`, {
-            waitUntil: 'networkidle2',
-            timeout: 30000,
+            waitUntil: 'domcontentloaded',
+            timeout: 15000,
           });
 
           // Wait for posts to load
-          await page.waitForSelector('[data-ad-comet-preview="message"]', { timeout: 15000 });
+          await page.waitForSelector('[data-ad-comet-preview="message"]', { timeout: 10000 });
 
           const rawPosts = await page.evaluate(() => {
             const posts: Array<{ text: string; url: string }> = [];
