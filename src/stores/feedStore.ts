@@ -9,6 +9,7 @@ interface FeedState {
   selectedPlatform: Platform | null;
   viewFilter: ViewFilter;
   scrapeStatus: 'running' | 'idle' | 'error';
+  lastSyncTime: string | null;
   isLoading: boolean;
 
   selectPerson: (id: string | null) => void;
@@ -29,6 +30,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   selectedPlatform: null,
   viewFilter: 'all',
   scrapeStatus: 'idle',
+  lastSyncTime: null,
   isLoading: false,
 
   selectPerson: (id) => {
@@ -51,7 +53,6 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
-    // Optimistic update
     set({
       items: items.map((i) =>
         i.id === itemId ? { ...i, isStarred: !i.isStarred } : i
@@ -59,9 +60,8 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     });
 
     try {
-      await window.electronAPI.invoke('items:toggleStar', itemId);
+      await window.electronAPI?.invoke('items:toggleStar', { id: itemId });
     } catch {
-      // Revert on failure
       set({
         items: items.map((i) =>
           i.id === itemId ? { ...i, isStarred: item.isStarred } : i
@@ -70,11 +70,16 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     }
   },
 
-  setScrapeStatus: (status) => set({ scrapeStatus: status }),
+  setScrapeStatus: (status) => {
+    set({ scrapeStatus: status });
+    if (status === 'idle') {
+      set({ lastSyncTime: new Date().toISOString() });
+    }
+  },
 
   fetchPersons: async () => {
     try {
-      const persons = await window.electronAPI.invoke('persons:getAll');
+      const persons = await window.electronAPI?.invoke('persons:getAll');
       set({ persons: persons ?? [] });
     } catch {
       set({ persons: [] });
@@ -88,10 +93,10 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       const filters: Record<string, any> = {};
       if (selectedPersonId) filters.personId = selectedPersonId;
       if (selectedPlatform) filters.platform = selectedPlatform;
-      if (viewFilter === 'starred') filters.starred = true;
-      if (viewFilter === 'papers') filters.platform = 'arxiv';
+      if (viewFilter === 'starred') filters.filter = 'starred';
+      if (viewFilter === 'papers') filters.filter = 'papers';
 
-      const items = await window.electronAPI.invoke('items:getAll', filters);
+      const items = await window.electronAPI?.invoke('items:getAll', filters);
       set({ items: items ?? [], isLoading: false });
     } catch {
       set({ items: [], isLoading: false });
@@ -100,7 +105,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
 
   fetchWeeklyTopics: async () => {
     try {
-      const topics = await window.electronAPI.invoke('weekly-topics:get');
+      const topics = await window.electronAPI?.invoke('weekly-topics:get');
       set({ weeklyTopics: topics ?? [] });
     } catch {
       set({ weeklyTopics: [] });

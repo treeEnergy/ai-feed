@@ -51,13 +51,20 @@ export class Scheduler {
     this.isRunning = true;
     try {
       this.notify('scrape:status', 'running');
+      console.log('[Scheduler] Starting scrape run...');
 
-      const persons = this.queries.getAllPersons();
+      const persons = this.queries.getAllPersons().filter(p => Object.keys(p.platforms).length > 0);
+      console.log(`[Scheduler] Found ${persons.length} persons to scrape`);
+
       const items = await this.scraperEngine.scrapeAll(persons);
+      console.log(`[Scheduler] Scraped ${items.length} items total`);
+
       this.queries.upsertItems(items);
+      console.log('[Scheduler] Items saved to database');
 
       if (this.translator) {
         const pending = this.queries.getItemsNeedingTranslation();
+        console.log(`[Scheduler] ${pending.length} items need translation`);
         if (pending.length > 0) {
           const translated = await this.translator.translateBatch(pending);
           for (const item of translated) {
@@ -65,7 +72,10 @@ export class Scheduler {
               this.queries.updateTranslation(item.id, item.translatedText, item.topics || []);
             }
           }
+          console.log('[Scheduler] Translation complete');
         }
+      } else {
+        console.log('[Scheduler] No translator configured (missing API key?)');
       }
 
       const monday = this.getCurrentMonday();
@@ -73,6 +83,7 @@ export class Scheduler {
 
       this.notify('scrape:status', 'idle');
       this.notify('items:updated', null);
+      console.log('[Scheduler] Run complete');
     } catch (e) {
       console.error('Scheduler run failed:', e);
       this.notify('scrape:status', 'error');

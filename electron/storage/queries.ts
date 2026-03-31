@@ -163,7 +163,7 @@ export class Queries {
 
   getItemsNeedingTranslation(): ScrapedItem[] {
     const db = getDb();
-    const rows = db.prepare("SELECT * FROM items WHERE translationStatus = 'pending' ORDER BY publishedAt DESC").all();
+    const rows = db.prepare("SELECT * FROM items WHERE translationStatus IN ('pending', 'failed') ORDER BY publishedAt DESC").all();
     return rows.map(rowToItem);
   }
 

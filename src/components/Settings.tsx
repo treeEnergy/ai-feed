@@ -46,7 +46,7 @@ export function Settings({ onClose }: SettingsProps) {
   };
 
   const handleRunNow = () => {
-    window.electronAPI.invoke('scraper:runNow').catch(() => {});
+    window.electronAPI?.invoke('scraper:runNow').catch(() => {});
   };
 
   const inputStyle: React.CSSProperties = {

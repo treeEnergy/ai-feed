@@ -27,13 +27,14 @@ export function AddPersonDialog({ onClose }: AddPersonDialogProps) {
     if (!name.trim()) return;
     setSubmitting(true);
     try {
-      await window.electronAPI.invoke('persons:add', {
+      await window.electronAPI?.invoke('persons:add', {
         name: name.trim(),
         title: title.trim() || undefined,
         avatarColor,
         platforms,
       });
       await fetchPersons();
+      setSubmitting(false);
       onClose();
     } catch {
       setSubmitting(false);

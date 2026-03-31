@@ -1,6 +1,17 @@
 import { useFeedStore } from '../stores/feedStore';
 import type { ViewFilter } from '../types';
 
+function timeAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return `${mins} 分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  const days = Math.floor(hours / 24);
+  return `${days} 天前`;
+}
+
 interface SidebarProps {
   onAddPerson: () => void;
   onOpenSettings: () => void;
@@ -13,6 +24,7 @@ export function Sidebar({ onAddPerson, onOpenSettings }: SidebarProps) {
     selectedPersonId,
     viewFilter,
     scrapeStatus,
+    lastSyncTime,
     selectPerson,
     setViewFilter,
   } = useFeedStore();
@@ -221,7 +233,9 @@ export function Sidebar({ onAddPerson, onOpenSettings }: SidebarProps) {
             ? '同步中...'
             : scrapeStatus === 'error'
             ? '同步出错'
-            : '上次同步 · 刚刚'}
+            : lastSyncTime
+            ? `上次同步 · ${timeAgo(lastSyncTime)}`
+            : '未同步'}
         </span>
         <button
           onClick={onOpenSettings}

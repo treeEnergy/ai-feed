@@ -46,7 +46,7 @@ export function FeedCard({ item, person }: FeedCardProps) {
   };
 
   const handleOpenUrl = () => {
-    window.electronAPI.invoke('shell:openExternal', item.url).catch(() => {});
+    window.electronAPI?.invoke('shell:openExternal', item.url).catch(() => {});
   };
 
   return (

@@ -20,7 +20,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   fetchSettings: async () => {
     try {
-      const settings = await window.electronAPI.invoke('settings:get');
+      const settings = await window.electronAPI?.invoke('settings:get');
       set({ settings: settings ?? defaultSettings, isLoaded: true });
     } catch {
       set({ isLoaded: true });
@@ -31,7 +31,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const merged = { ...get().settings, ...patch };
     set({ settings: merged });
     try {
-      await window.electronAPI.invoke('settings:update', merged);
+      await window.electronAPI?.invoke('settings:update', merged);
     } catch {
       // silent
     }

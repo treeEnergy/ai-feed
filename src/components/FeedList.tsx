@@ -6,14 +6,21 @@ import type { ScrapedItem } from '../types';
 
 function dateGroup(dateStr: string): string {
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '更早';
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const monthAgo = new Date(today);
+  monthAgo.setMonth(monthAgo.getMonth() - 1);
   const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
   if (itemDate >= today) return '今天';
   if (itemDate >= yesterday) return '昨天';
+  if (itemDate >= weekAgo) return '本周';
+  if (itemDate >= monthAgo) return '本月';
   return '更早';
 }
 
@@ -31,7 +38,7 @@ export function FeedList() {
       (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
     const groups: { label: string; items: ScrapedItem[] }[] = [];
-    const order = ['今天', '昨天', '更早'];
+    const order = ['今天', '昨天', '本周', '本月', '更早'];
     const map = new Map<string, ScrapedItem[]>();
 
     for (const item of sorted) {

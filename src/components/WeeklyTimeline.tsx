@@ -133,7 +133,7 @@ export function WeeklyTimeline() {
                         className="text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
                         style={{ backgroundColor: c.bg, color: c.text }}
                       >
-                        {t.name}
+                        {typeof t === 'string' ? t : t.name}
                       </span>
                     );
                   })
