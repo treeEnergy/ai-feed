@@ -2,5 +2,10 @@ node_modules/
 dist/
 dist-electron/
 release/
+release-*/
 *.db
+*.db-wal
+*.db-shm
 .env
+deepseek-api-key.txt
+.superpowers/

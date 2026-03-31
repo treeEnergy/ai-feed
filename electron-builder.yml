@@ -1,13 +1,18 @@
 appId: com.aifeed.app
 productName: AI Feed
 directories:
-  output: release
+  output: release-v01
 files:
   - dist
   - dist-electron
+  - "!**/*.map"
+forceCodeSigning: false
 win:
-  target: nsis
-  icon: build/icon.ico
-nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
+  target: dir
+  signAndEditExecutable: false
+asar: true
+asarUnpack:
+  - "**/*.node"
+electronLanguages:
+  - zh-CN
+  - en-US
